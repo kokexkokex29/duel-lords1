@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leaderboard - Duel Lords Tournament</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='style.css') }}" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-crown text-warning"></i>
+                Duel Lords
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="/">
+                    <i class="fas fa-home"></i> Home
+                </a>
+                <a class="nav-link active" href="/leaderboard">
+                    <i class="fas fa-trophy"></i> Leaderboard
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Header -->
+    <div class="bg-primary text-white py-5">
+        <div class="container text-center">
+            <h1><i class="fas fa-trophy text-warning"></i> Tournament Leaderboard</h1>
+            <p class="lead">Top fighters in the Duel Lords championship</p>
+        </div>
+    </div>
+
+    <div class="container my-5">
+        {% if players %}
+            <!-- Stats Overview -->
+            <div class="row mb-5">
+                <div class="col-md-3">
+                    <div class="stat-card text-center">
+                        <i class="fas fa-users stat-icon text-primary"></i>
+                        <h3>{{ players|length }}</h3>
+                        <p>Total Players</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card text-center">
+                        <i class="fas fa-fire stat-icon text-danger"></i>
+                        <h3>{{ players|map(attribute='kills')|sum }}</h3>
+                        <p>Total Kills</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card text-center">
+                        <i class="fas fa-fist-raised stat-icon text-success"></i>
+                        <h3>{{ players|map(attribute='wins')|sum }}</h3>
+                        <p>Total Wins</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card text-center">
+                        <i class="fas fa-gamepad stat-icon text-info"></i>
+                        <h3>{{ (players|map(attribute='wins')|sum) + (players|map(attribute='losses')|sum) + (players|map(attribute='draws')|sum) }}</h3>
+                        <p>Total Matches</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Top 3 Podium -->
+            {% if players|length >= 3 %}
+            <div class="podium-section mb-5">
+                <div class="row justify-content-center">
+                    <!-- Second Place -->
+                    <div class="col-md-3 text-center">
+                        <div class="podium-card silver">
+                            <div class="podium-rank">🥈</div>
+                            <h4>{{ players[1].username }}</h4>
+                            <div class="podium-stats">
+                                <div><strong>{{ players[1].wins }}</strong> Wins</div>
+                                <div><strong>{{ players[1].kills }}</strong> Kills</div>
+                                <div><strong>{{ "%.1f"|format((players[1].wins / (players[1].wins + players[1].losses + players[1].draws) * 100) if (players[1].wins + players[1].losses + players[1].draws) > 0 else 0) }}%</strong> Win Rate</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- First Place -->
+                    <div class="col-md-3 text-center">
+                        <div class="podium-card gold champion">
+                            <div class="podium-rank">🥇</div>
+                            <div class="champion-crown">👑</div>
+                            <h4>{{ players[0].username }}</h4>
+                            <div class="podium-stats">
+                                <div><strong>{{ players[0].wins }}</strong> Wins</div>
+                                <div><strong>{{ players[0].kills }}</strong> Kills</div>
+                                <div><strong>{{ "%.1f"|format((players[0].wins / (players[0].wins + players[0].losses + players[0].draws) * 100) if (players[0].wins + players[0].losses + players[0].draws) > 0 else 0) }}%</strong> Win Rate</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Third Place -->
+                    <div class="col-md-3 text-center">
+                        <div class="podium-card bronze">
+                            <div class="podium-rank">🥉</div>
+                            <h4>{{ players[2].username }}</h4>
+                            <div class="podium-stats">
+                                <div><strong>{{ players[2].wins }}</strong> Wins</div>
+                                <div><strong>{{ players[2].kills }}</strong> Kills</div>
+                                <div><strong>{{ "%.1f"|format((players[2].wins / (players[2].wins + players[2].losses + players[2].draws) * 100) if (players[2].wins + players[2].losses + players[2].draws) > 0 else 0) }}%</strong> Win Rate</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Full Leaderboard Table -->
+            <div class="card">
+                <div class="card-header bg-dark text-white">
+                    <h3><i class="fas fa-list"></i> Full Rankings</h3>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover mb-0">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Rank</th>
+                                    <th>Player</th>
+                                    <th>Record</th>
+                                    <th>Win Rate</th>
+                                    <th>Kills</th>
+                                    <th>Deaths</th>
+                                    <th>K/D</th>
+                                    <th>Registered</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for player in players %}
+                                {% set total_matches = player.wins + player.losses + player.draws %}
+                                {% set win_rate = (player.wins / total_matches * 100) if total_matches > 0 else 0 %}
+                                {% set kd_ratio = (player.kills / player.deaths) if player.deaths > 0 else player.kills %}
+                                <tr class="{% if loop.index <= 3 %}table-warning{% endif %}">
+                                    <td>
+                                        <span class="rank-badge rank-{{ loop.index }}">
+                                            {% if loop.index == 1 %}🥇
+                                            {% elif loop.index == 2 %}🥈
+                                            {% elif loop.index == 3 %}🥉
+                                            {% else %}#{{ loop.index }}
+                                            {% endif %}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <strong>{{ player.username }}</strong>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-success">{{ player.wins }}W</span>
+                                        <span class="badge bg-danger">{{ player.losses }}L</span>
+                                        <span class="badge bg-secondary">{{ player.draws }}D</span>
+                                    </td>
+                                    <td>
+                                        <div class="progress" style="height: 20px;">
+                                            <div class="progress-bar bg-success" 
+                                                 style="width: {{ win_rate }}%">
+                                                {{ "%.1f"|format(win_rate) }}%
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="text-success">
+                                            <i class="fas fa-crosshairs"></i>
+                                            {{ player.kills }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="text-danger">
+                                            <i class="fas fa-skull"></i>
+                                            {{ player.deaths }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="fw-bold {% if kd_ratio >= 2 %}text-success{% elif kd_ratio >= 1 %}text-warning{% else %}text-danger{% endif %}">
+                                            {{ "%.2f"|format(kd_ratio) }}
+                                        </span>
+                                    </td>
+                                    <td class="text-muted">
+                                        <small>{{ player.registered_at[:10] if player.registered_at else 'Unknown' }}</small>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Section -->
+            <div class="row mt-5">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5><i class="fas fa-chart-pie"></i> Win Distribution</h5>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="winChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5><i class="fas fa-chart-bar"></i> Top Killers</h5>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="killsChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        {% else %}
+            <!-- Empty State -->
+            <div class="text-center py-5">
+                <i class="fas fa-trophy text-muted" style="font-size: 4rem;"></i>
+                <h3 class="mt-3">No Players Yet</h3>
+                <p class="text-muted">The tournament is waiting for brave warriors to join!</p>
+                <p class="text-muted">Use <code>/register_player</code> in Discord to add players.</p>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-light py-4 mt-5">
+        <div class="container text-center">
+            <div class="mb-3">
+                <i class="fas fa-crown text-warning fs-2"></i>
+            </div>
+            <h5>Duel Lords Tournament</h5>
+            <p class="text-muted mb-0">Fight your way to the top!</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        {% if players %}
+        // Win Distribution Chart
+        const winCtx = document.getElementById('winChart').getContext('2d');
+        new Chart(winCtx, {
+            type: 'doughnut',
+            data: {
+                labels: {{ players[:5]|map(attribute='username')|list|tojson }},
+                datasets: [{
+                    data: {{ players[:5]|map(attribute='wins')|list|tojson }},
+                    backgroundColor: [
+                        '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+
+        // Top Killers Chart
+        const killsCtx = document.getElementById('killsChart').getContext('2d');
+        new Chart(killsCtx, {
+            type: 'bar',
+            data: {
+                labels: {{ players[:5]|map(attribute='username')|list|tojson }},
+                datasets: [{
+                    label: 'Kills',
+                    data: {{ players[:5]|map(attribute='kills')|list|tojson }},
+                    backgroundColor: 'rgba(255, 99, 132, 0.8)',
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+        {% endif %}
+    </script>
+</body>
+</html>
